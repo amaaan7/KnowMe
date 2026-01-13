@@ -11,9 +11,24 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from decouple import config, RepositoryEnv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Read from .env file directly (bypasses environment variables)
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    env_config = RepositoryEnv(str(env_file))
+    # Use RepositoryEnv for config, which reads from .env file first
+    def get_env_var(key, default=None):
+        try:
+            return env_config[key]
+        except KeyError:
+            return os.environ.get(key, default)
+else:
+    def get_env_var(key, default=None):
+        return config(key, default=default)
 
 
 # Quick-start development settings - unsuitable for production
@@ -138,3 +153,13 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 LOGIN_REDIRECT_URL = 'blog-home'
 LOGIN_URL = 'login'
+
+DEFAULT_FROM_EMAIL = get_env_var("EMAIL_USER", default="amanmulla231@gmail.com")
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+# Read email settings from .env file first, fallback to environment variables
+EMAIL_HOST_USER = get_env_var("EMAIL_USER", default=None)
+EMAIL_HOST_PASSWORD = get_env_var("EMAIL_PASS", default=None)
