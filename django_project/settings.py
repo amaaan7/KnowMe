@@ -27,8 +27,9 @@ if env_file.exists():
         except KeyError:
             return os.environ.get(key, default)
 else:
+    # Fallback to environment variables if no .env file
     def get_env_var(key, default=None):
-        return config(key, default=default)
+        return os.environ.get(key, default)
 
 
 # Quick-start development settings - unsuitable for production
@@ -98,7 +99,18 @@ import dj_database_url
 
 database_url = get_env_var('DATABASE_URL', None)
 if database_url is None:
+    # On Vercel (or production), require DATABASE_URL
+    # For local development, fall back to SQLite
+    import os
+    if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
+        # On Vercel, DATABASE_URL is required
+        raise ValueError(
+            "DATABASE_URL environment variable is required on Vercel. "
+            "Please set it in your Vercel project settings."
+        )
+    # Local development: use SQLite
     database_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+
 DATABASES = {
     'default': dj_database_url.config(
         default=database_url,
