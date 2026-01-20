@@ -12,22 +12,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from decouple import config, RepositoryEnv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Check if running on Vercel
+IS_VERCEL = os.environ.get('VERCEL', False) or os.environ.get('VERCEL_ENV', False)
+
 # Read from .env file directly (bypasses environment variables)
 env_file = BASE_DIR / '.env'
-if env_file.exists():
+if env_file.exists() and not IS_VERCEL:  # Don't use .env on Vercel
     env_config = RepositoryEnv(str(env_file))
-    # Use RepositoryEnv for config, which reads from .env file first
     def get_env_var(key, default=None):
         try:
             return env_config[key]
         except KeyError:
             return os.environ.get(key, default)
 else:
-    # Fallback to environment variables if no .env file
+    # Use environment variables (Vercel)
     def get_env_var(key, default=None):
         return os.environ.get(key, default)
 
@@ -94,29 +97,25 @@ WSGI_APPLICATION = 'django_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Use PostgreSQL on Vercel (via DATABASE_URL), fallback to SQLite for local development
-import dj_database_url
-
 database_url = get_env_var('DATABASE_URL', None)
-if database_url is None:
-    # On Vercel (or production), require DATABASE_URL
-    # For local development, fall back to SQLite
-    import os
-    if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
-        # On Vercel, DATABASE_URL is required
-        raise ValueError(
-            "DATABASE_URL environment variable is required on Vercel. "
-            "Please set it in your Vercel project settings."
-        )
-    # Local development: use SQLite
-    database_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=database_url,
-        conn_max_age=600
-    )
-}
+if database_url:
+    # Use provided DATABASE_URL (production/Vercel)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    # Local development: use SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -169,8 +168,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Crispy Forms Settings
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
-
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 

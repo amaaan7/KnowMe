@@ -9,15 +9,14 @@ sys.path.insert(0, BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_project.settings')
 
 # Import Django after path is set
+import django
 from django.core.wsgi import get_wsgi_application
 
-# Initialize Django application (this will load settings)
-try:
-    application = get_wsgi_application()
-except Exception as e:
-    # If initialization fails, log the error
-    import traceback
-    print(f"Django initialization error: {e}")
-    print(traceback.format_exc())
-    raise
+# Initialize Django
+django.setup()
 
+# Get WSGI application
+application = get_wsgi_application()
+
+# CRITICAL: Vercel needs 'app', not 'application'
+app = application
