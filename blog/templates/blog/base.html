@@ -8,16 +8,16 @@
     <link rel="stylesheet" href="{% static 'blog/main.css' %}">
     
     {% if title %}
-        <title>Django Blog - {{title}}</title>
+        <title>KnowME - {{title}}</title>
     {% else %}
-        <title>Django blog</title>
+        <title>KnowME</title>
     {% endif %}
 </head>
 <body>
     <header class="site-header">
         <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
             <div class="container">
-                <a class="navbar-brand me-4" href="{% url 'blog-home' %}">Django Blog</a>
+                <a class="navbar-brand me-4" href="{% url 'blog-home' %}">KnowME</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
