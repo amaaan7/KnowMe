@@ -1,6 +1,10 @@
-from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
+from .models import Post, Like, Announcement, Event
+from django.db.models import Exists, OuterRef
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.generic import (
     ListView, 
     DetailView,
@@ -8,24 +12,37 @@ from django.views.generic import (
     UpdateView,
     DeleteView
     )
-from .models import Post
-
-
-
-
-def home(request):
-    context = {
-        'posts': Post.objects.all()
-    }
-    return render(request, 'blog/home.html', context)
+from django.db.models import Exists, OuterRef, Count
 
 
 class PostListView(ListView):
     model = Post
     template_name = 'blog/home.html'
-    context_object_name = 'posts' 
+    context_object_name = 'posts'
     ordering = ['-date_posted']
     paginate_by = 5
+
+    def get_queryset(self):
+        qs = Post.objects.all().order_by('-date_posted')
+
+        qs = qs.annotate(
+            like_count=Count("like", distinct=True)
+        )
+
+        if self.request.user.is_authenticated:
+            qs = qs.annotate(
+                is_liked=Exists(
+                    Like.objects.filter(
+                        post=OuterRef('pk'),
+                        user=self.request.user
+                    )
+                )
+            )
+        else:
+            qs = qs.annotate(is_liked=False)
+
+        return qs
+
 
 
 class UserPostListView(ListView):
@@ -82,3 +99,101 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 def about(request):
     return render(request, 'blog/about.html', {'title': 'About'})
 
+
+# Announcement Views
+class AnnouncementListView(ListView):
+    model = Announcement
+    template_name = 'blog/announcements.html'
+    context_object_name = 'announcements'
+    ordering = ['-date_posted']
+    paginate_by = 10
+
+
+class AnnouncementDetailView(DetailView):
+    model = Announcement
+    template_name = 'blog/announcement_detail.html'
+
+
+class AnnouncementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Announcement
+    fields = ['title', 'content', 'is_important']
+    template_name = 'blog/announcement_form.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def test_func(self):
+        # Only staff/admin can create announcements
+        return self.request.user.is_staff
+
+
+# Event/Calendar Views
+class EventListView(ListView):
+    model = Event
+    template_name = 'blog/calendar.html'
+    context_object_name = 'events'
+    ordering = ['event_date']
+    paginate_by = 10
+
+    def get_queryset(self):
+        # Only show future events or events from the last 7 days
+        from django.utils import timezone
+        from datetime import timedelta
+        return Event.objects.filter(
+            event_date__gte=timezone.now() - timedelta(days=7)
+        ).order_by('event_date')
+
+
+class EventDetailView(DetailView):
+    model = Event
+    template_name = 'blog/event_detail.html'
+
+
+class EventCreateView(LoginRequiredMixin, CreateView):
+    model = Event
+    fields = ['title', 'description', 'event_date']
+    template_name = 'blog/event_form.html'
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+# General Info Page
+def info(request):
+    return render(request, 'blog/info.html', {'title': 'Information'})
+
+@login_required
+def toggle_like(request, post_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    post = get_object_or_404(Post, id=post_id)
+
+    like, created = Like.objects.get_or_create(
+        user=request.user,
+        post=post
+    )
+
+    if not created:
+        like.delete()
+        liked = False
+    else:
+        liked = True
+
+    like_count = Like.objects.filter(post=post).count()
+
+    return JsonResponse({
+        "liked": liked,
+        "like_count": like_count
+    })
+
+def like_history(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    likes = Like.objects.filter(post=post).select_related("user")
+
+    return render(request, "blog/like_history.html", {
+        "post": post,
+        "likes": likes
+    })

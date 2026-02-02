@@ -1,0 +1,17 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <article class="media content-section">
+        <div class="media-body">
+            <div class="article-metadata">
+                <small class="text-muted">{{ object.date_posted|date:"F d, Y" }}</small>
+                {% if object.is_important %}
+                    <span class="badge bg-danger ms-2">Important</span>
+                {% endif %}
+            </div>
+            <h2 class="article-title">{{ object.title }}</h2>
+            <p class="article-content">{{ object.content }}</p>
+        </div>
+    </article>
+    <a class="btn btn-secondary" href="{% url 'announcements' %}">Back to Announcements</a>
+{% endblock content %}
+

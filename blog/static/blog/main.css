@@ -82,3 +82,17 @@ a.article-title:hover {
 .account-heading {
   font-size: 2.5rem;
 }
+
+.like-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.like-btn.liked {
+  color: #e0245e; /* Instagram pink/red */
+  transform: scale(1.15);
+}

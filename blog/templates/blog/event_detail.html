@@ -1,0 +1,15 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <article class="media content-section">
+        <div class="media-body">
+            <div class="article-metadata">
+                <strong class="text-primary">{{ object.event_date|date:"F d, Y - g:i A" }}</strong>
+                <small class="text-muted ms-2">Posted: {{ object.date_posted|date:"M d, Y" }}</small>
+            </div>
+            <h2 class="article-title">{{ object.title }}</h2>
+            <p class="article-content">{{ object.description }}</p>
+        </div>
+    </article>
+    <a class="btn btn-secondary" href="{% url 'calendar' %}">Back to Calendar</a>
+{% endblock content %}
+

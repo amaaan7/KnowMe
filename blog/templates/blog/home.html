@@ -3,16 +3,48 @@
     {% for post in posts %}
         <article class="media content-section">
           <img class="rounded-circle article-img" src="{{ post.author.profile.image.url }}">
+
           <div class="media-body">
             <div class="article-metadata">
-              <a class="mr-2" href="{% url 'user-posts' post.author.username %}">{{ post.author }}</a>
-              <small class="text-muted">{{ post.date_posted|date:"F d, Y" }}</small>
+              <a class="mr-2" href="{% url 'user-posts' post.author.username %}">
+                {{ post.author }}
+              </a>
+              <small class="text-muted">
+                {{ post.date_posted|date:"F d, Y" }}
+              </small>
             </div>
-            <h2><a class="article-title" href="{% url 'post-detail' post.id %}">{{ post.title }}</a></h2>
+
+            <h2>
+              <a class="article-title" href="{% url 'post-detail' post.pk %}">
+                {{ post.title }}
+              </a>
+            </h2>
+
             <p class="article-content">{{ post.content }}</p>
+
+            <!-- 🔴 LIKE SECTION START -->
+            <div class="mt-2">              
+              <button
+                class="btn btn-outline-danger btn-sm like-btn {% if post.is_liked %}liked{% endif %}"
+                data-post-id="{{ post.id }}">
+                ♥
+              </button>
+
+              <span id="like-count-{{ post.id }}">
+                {{ post.like_set.count }} likes
+              </span>
+            
+              <a href="{% url 'like_history' post.id %}" class="btn btn-link btn-sm">
+                View likes
+              </a>
+            </div>
+            
+            <!-- 🔴 LIKE SECTION END -->
+
           </div>
         </article>
     {% endfor %}
+
     {% if is_paginated %}
 
         {% if page_obj.has_previous %}
@@ -23,7 +55,7 @@
         {% for num in page_obj.paginator.page_range %}
           {% if page_obj.number == num %}
             <a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a>
-          {% elif num > page_obj.number|add:'-3' and  num < page_obj.number|add:'3'  %}
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
             <a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a>
           {% endif %}
         {% endfor %}
@@ -34,4 +66,45 @@
         {% endif %}
 
     {% endif %}
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const csrftoken = document
+          .querySelector('meta[name="csrf-token"]')
+          .getAttribute('content');
+      
+        document.querySelectorAll(".like-btn").forEach(btn => {
+          btn.addEventListener("click", function (e) {
+            e.preventDefault();
+      
+            if (this.disabled) return;   // 🚫 block spam clicks
+            this.disabled = true;
+      
+            const postId = this.dataset.postId;
+      
+            fetch(`/post/${postId}/like/`, {
+              method: "POST",
+              headers: {
+                "X-CSRFToken": csrftoken
+              }
+            })
+            .then(res => res.json())
+            .then(data => {
+              document.getElementById(`like-count-${postId}`)
+                .innerText = `${data.like_count} likes`;
+      
+              this.classList.toggle("liked", data.liked);
+              this.disabled = false;  // ✅ re-enable after response
+            })
+            .catch(() => {
+              this.disabled = false;  // safety fallback
+            });
+          });
+        });
+      });
+      </script>
+        
 {% endblock content %}
+
+
+  

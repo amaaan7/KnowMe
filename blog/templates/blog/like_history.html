@@ -1,0 +1,18 @@
+{% extends "blog/base.html" %}
+{% block content %}
+
+<h3>People who liked "{{ post.title }}"</h3>
+
+<ul class="list-group">
+  {% for like in likes %}
+    <li class="list-group-item">
+      {{ like.user.username }}
+    </li>
+  {% empty %}
+    <li class="list-group-item">No likes yet</li>
+  {% endfor %}
+</ul>
+
+<a href="{% url 'blog-home' %}" class="btn btn-secondary mt-3">Back</a>
+
+{% endblock %}

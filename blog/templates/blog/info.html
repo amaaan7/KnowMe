@@ -1,0 +1,20 @@
+{% extends "blog/base.html" %}
+{% block content %}
+    <h1 class="mb-4">General Information</h1>
+    <div class="content-section">
+        <h3>Welcome to KnowME</h3>
+        <p>This is a community platform where you can share your thoughts, connect with others, and stay updated with the latest announcements and events.</p>
+        
+        <h4 class="mt-4">Features:</h4>
+        <ul>
+            <li><strong>Latest Posts:</strong> View the most recent blog posts from our community</li>
+            <li><strong>Announcements:</strong> Stay informed about important updates and news</li>
+            <li><strong>Calendar:</strong> Check out upcoming events and important dates</li>
+            <li><strong>Create Posts:</strong> Share your thoughts and experiences with the community</li>
+        </ul>
+        
+        <h4 class="mt-4">Getting Started:</h4>
+        <p>To start posting and engaging with the community, please <a href="{% url 'register' %}">register</a> for an account or <a href="{% url 'login' %}">login</a> if you already have one.</p>
+    </div>
+{% endblock content %}
+
