@@ -27,4 +27,8 @@ urlpatterns = [
     # Like functionality
     path("post/<int:post_id>/like/", views.toggle_like, name='toggle_like'),
     path("post/<int:post_id>/likes/", views.like_history, name='like_history'),
+    path('post/<int:post_id>/comment/', views.add_comment, name='add-comment'),
+    path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete-comment'),
+    path('post/<int:post_id>/delete-ajax/', views.delete_post_ajax, name='delete-post-ajax'),
+
 ]

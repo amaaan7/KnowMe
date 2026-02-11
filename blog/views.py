@@ -2,7 +2,9 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
-from .models import Post, Like, Announcement, Event
+from .models import Post, Like, Announcement, Event, Comment
+from .forms import CommentForm
+from django.views.decorators.http import require_POST
 from django.db.models import Exists, OuterRef
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.generic import (
@@ -197,3 +199,47 @@ def like_history(request, post_id):
         "post": post,
         "likes": likes
     })
+
+@login_required
+@require_POST
+def add_comment(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    form = CommentForm(request.POST)
+
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+
+        return JsonResponse({
+            'author': request.user.username,
+            'content': comment.content,
+            'date': comment.date_posted.strftime("%b %d, %Y %H:%M"),
+            'comment_id': comment.id
+        })
+
+    return JsonResponse({'error': 'Invalid form'}, status=400)
+
+@login_required
+@require_POST
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+
+    # permission check (VERY IMPORTANT)
+    if comment.author != request.user:
+        return JsonResponse({'error': 'Not allowed'}, status=403)
+
+    comment.delete()
+    return JsonResponse({'success': True})
+
+@login_required
+@require_POST
+def delete_post_ajax(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+    if post.author != request.user:
+        return JsonResponse({'error': 'Not allowed'}, status=403)
+
+    post.delete()
+    return JsonResponse({'success': True})
