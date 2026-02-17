@@ -25,7 +25,9 @@ SECRET_KEY = os.getenv(
     "django-insecure-change-this"
 )
 
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+DEBUG = True
+
+# DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ["*"] if os.getenv("VERCEL") else [
     "localhost",

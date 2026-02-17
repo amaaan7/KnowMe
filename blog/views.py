@@ -6,6 +6,7 @@ from .models import Post, Like, Announcement, Event, Comment
 from .forms import CommentForm
 from django.views.decorators.http import require_POST
 from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Value, BooleanField
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.generic import (
     ListView, 
@@ -41,7 +42,7 @@ class PostListView(ListView):
                 )
             )
         else:
-            qs = qs.annotate(is_liked=False)
+            qs = qs.annotate(is_liked=Value(False, output_field=BooleanField()))
 
         return qs
 
