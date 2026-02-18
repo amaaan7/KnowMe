@@ -262,4 +262,74 @@ body {
   color: #444;
   line-height: 1.6;
   margin-bottom: 6px;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+
+.post-stats {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  gap: 18px;
+}
+
+.post-stats span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+
+/* INTERACTION BAR */
+
+.interaction-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+/* heart button */
+.like-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: #bbb;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.like-btn:hover {
+  transform: scale(1.2);
+}
+
+.like-btn.liked {
+  color: #e0245e;
+}
+
+/* counts */
+.like-count,
+.comment-count {
+  text-decoration: none;
+  color: #444;
+  font-weight: 500;
+}
+
+.like-count:hover,
+.comment-count:hover {
+  text-decoration: underline;
+}
+
+/* comment icon */
+.comment-icon {
+  text-decoration: none;
+  font-size: 20px;
+  margin-left: 8px;
 }

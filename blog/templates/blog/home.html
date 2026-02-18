@@ -24,28 +24,37 @@
       </h2>
 
       <p class="article-content">
-        {{ post.content|truncatewords:35 }}
+        {{ post.content|truncatewords:120 }}
       </p>
 
       {% if post.content|wordcount > 35 %}
         <a href="{% url 'post-detail' post.id %}" class="read-more">Read more →</a>
       {% endif %}
             <!-- 🔴 LIKE SECTION START -->
-            <div class="mt-2">              
-              <button
-                class="btn btn-outline-danger btn-sm like-btn {% if post.is_liked %}liked{% endif %}"
-                data-post-id="{{ post.id }}">
-                ♥
-              </button>
+        <div class="interaction-bar">
 
-              <span id="like-count-{{ post.id }}">
-                {{ post.like_set.count }} likes
-              </span>
-            
-              <a href="{% url 'like_history' post.id %}" class="btn btn-link btn-sm">
-                View likes
-              </a>
-            </div>
+          <!-- LIKE -->
+          <button class="like-btn {% if post.is_liked %}liked{% endif %}"
+                  data-post-id="{{ post.id }}">
+              ♥
+          </button>
+      
+          <a href="{% url 'like_history' post.id %}" class="like-count">
+              {{ post.like_set.count }}
+          </a>
+      
+      
+          <!-- COMMENT -->
+          <a href="{% url 'post-detail' post.id %}#comments" class="comment-icon">
+              💬
+          </a>
+      
+          <a href="{% url 'post-detail' post.id %}#comments" class="comment-count">
+              {{ post.comment_count }}
+          </a>
+      
+        </div>
+      
             
             <!-- 🔴 LIKE SECTION END -->
 

@@ -5,8 +5,7 @@ from django.contrib.auth.models import User
 from .models import Post, Like, Announcement, Event, Comment
 from .forms import CommentForm
 from django.views.decorators.http import require_POST
-from django.db.models import Exists, OuterRef
-from django.db.models import Exists, OuterRef, Value, BooleanField
+from django.db.models import Exists, OuterRef, Value, BooleanField, Count
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.generic import (
     ListView, 
@@ -15,7 +14,8 @@ from django.views.generic import (
     UpdateView,
     DeleteView
     )
-from django.db.models import Exists, OuterRef, Count
+
+
 
 
 class PostListView(ListView):
@@ -28,10 +28,17 @@ class PostListView(ListView):
     def get_queryset(self):
         qs = Post.objects.all().order_by('-date_posted')
 
+        # LIKE COUNT
         qs = qs.annotate(
             like_count=Count("like", distinct=True)
         )
 
+        # COMMENT COUNT  ← THIS IS WHAT YOU WERE MISSING
+        qs = qs.annotate(
+            comment_count=Count("comments", distinct=True)
+        )
+
+        # LIKED STATE
         if self.request.user.is_authenticated:
             qs = qs.annotate(
                 is_liked=Exists(
@@ -42,7 +49,9 @@ class PostListView(ListView):
                 )
             )
         else:
-            qs = qs.annotate(is_liked=Value(False, output_field=BooleanField()))
+            qs = qs.annotate(
+                is_liked=Value(False, output_field=BooleanField())
+            )
 
         return qs
 
