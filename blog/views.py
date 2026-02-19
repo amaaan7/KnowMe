@@ -40,14 +40,24 @@ class PostListView(ListView):
 
         # LIKED STATE
         if self.request.user.is_authenticated:
+            from django.db.models import Case, When, BooleanField
             qs = qs.annotate(
-                is_liked=Exists(
-                    Like.objects.filter(
-                        post=OuterRef('pk'),
-                        user=self.request.user
-                    )
+                is_liked=Case(
+                    When(
+                        Exists(
+                            Like.objects.filter(
+                                post=OuterRef('pk'),
+                                user=self.request.user
+                            )
+                        ),
+                        then=True
+                    ),
+                    default=False,
+                    output_field=BooleanField()
                 )
             )
+
+
         else:
             qs = qs.annotate(
                 is_liked=Value(False, output_field=BooleanField())

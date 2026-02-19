@@ -34,10 +34,11 @@
         <div class="interaction-bar">
 
           <!-- LIKE -->
-          <button class="like-btn {% if post.is_liked %}liked{% endif %}"
-                  data-post-id="{{ post.id }}">
-              ♥
+
+          <button class="like-btn {% if post.is_liked %}liked{% endif %}" data-post-id="{{ post.id }}">
+            <i class="fa-regular fa-heart heart"></i>
           </button>
+        
       
           <a href="{% url 'like_history' post.id %}" class="like-count">
               {{ post.like_set.count }}
