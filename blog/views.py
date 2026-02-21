@@ -7,6 +7,9 @@ from .forms import CommentForm
 from django.views.decorators.http import require_POST
 from django.db.models import Exists, OuterRef, Value, BooleanField, Count
 from django.contrib.auth.decorators import login_required, user_passes_test
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .serializers import PostSerializer
 from django.views.generic import (
     ListView, 
     DetailView,
@@ -263,3 +266,9 @@ def delete_post_ajax(request, post_id):
 
     post.delete()
     return JsonResponse({'success': True})
+
+@api_view(['GET'])
+def api_posts(request):
+    posts = Post.objects.all().order_by('-date_posted')
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data)

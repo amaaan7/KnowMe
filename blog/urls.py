@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .views import (
     PostListView, PostDetailView, PostCreateView, PostUpdateView, PostDeleteView,
     UserPostListView, AnnouncementListView, AnnouncementDetailView, AnnouncementCreateView,
@@ -30,5 +30,6 @@ urlpatterns = [
     path('post/<int:post_id>/comment/', views.add_comment, name='add-comment'),
     path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete-comment'),
     path('post/<int:post_id>/delete-ajax/', views.delete_post_ajax, name='delete-post-ajax'),
-
+    path('api/posts/', views.api_posts),
+    path('api/', include('api.urls')),
 ]

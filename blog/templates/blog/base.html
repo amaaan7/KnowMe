@@ -97,117 +97,69 @@
 
 <!-- ================= LIKE SYSTEM ================= -->
 <script>
-/* CSRF cookie reader (Django official way) */
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-        const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.startsWith(name + "=")) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
     }
-    return cookieValue;
-}
-
-const csrftoken = getCookie("csrftoken");
-
-/* Prevent double clicking spam */
-let likeInProgress = false;
-
-document.addEventListener("click", function(e){
-
-    const btn = e.target.closest(".like-btn");
-    if(!btn || likeInProgress) return;
-
-    likeInProgress = true;
-
-    const postId = btn.dataset.postId;
-    const count = btn.parentElement.querySelector(".like-count");
-
-    const alreadyLiked = btn.classList.contains("liked");
-
-    /* ---------- INSTANT UI ---------- */
-    const icon = btn.querySelector(".heart");
-
-    if(alreadyLiked){
-        btn.classList.remove("liked");
-        if(count) count.textContent = Math.max(0, parseInt(count.textContent) - 1);
-
-        if(icon){
-            icon.classList.remove("fa-solid");
-            icon.classList.add("fa-regular");
-        }
-
-    } else {
-        btn.classList.add("liked");
-        if(count) count.textContent = parseInt(count.textContent) + 1;
-
-        if(icon){
-            icon.classList.remove("fa-regular");
-            icon.classList.add("fa-solid");
-        }
-
-        // pop animation
-        btn.classList.remove("pop");
-        void btn.offsetWidth;
-        btn.classList.add("pop");
-    }
-
-    /* ---------- SERVER ---------- */
-    fetch(`/post/${postId}/like/`, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": csrftoken,
-            "Accept": "application/json"
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        /* authoritative correction */
-        if(count) count.textContent = data.like_count;
-
-        const icon = btn.querySelector(".heart");
-
-        if(data.liked){
-            btn.classList.add("liked");
-
-            if(icon){
-                icon.classList.remove("fa-regular");
-                icon.classList.add("fa-solid");
-            }
-
-        } else {
-            btn.classList.remove("liked");
-
-            if(icon){
-                icon.classList.remove("fa-solid");
-                icon.classList.add("fa-regular");
-            }
-        }
-
-        likeInProgress = false;
-    })
-
-    .catch(() => {
-
-        /* rollback if request fails */
+    
+    const csrftoken = getCookie("csrftoken");
+    
+    /* EVENT DELEGATION — SAFE ON ALL PAGES */
+    document.addEventListener("click", function(e){
+    
+        const btn = e.target.closest(".like-btn");
+    
+        /* IMPORTANT: if no like button clicked → DO NOTHING */
+        if(!btn) return;
+    
+        const postId = btn.dataset.postId;
+        const count = btn.parentElement.querySelector(".like-count");
+    
+        const alreadyLiked = btn.classList.contains("liked");
+    
+        /* instant UI */
         if(alreadyLiked){
-            btn.classList.add("liked");
-            if(count) count.textContent = parseInt(count.textContent) + 1;
-        } else {
             btn.classList.remove("liked");
             if(count) count.textContent = Math.max(0, parseInt(count.textContent) - 1);
+        } else {
+            btn.classList.add("liked");
+            if(count) count.textContent = parseInt(count.textContent) + 1;
         }
-
-        likeInProgress = false;
+    
+        /* API call */
+        fetch(`/api/posts/${postId}/like/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrftoken,
+                "Accept": "application/json"
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+    
+            if(count) count.textContent = data.like_count;
+    
+            if(data.liked){
+                btn.classList.add("liked");
+            } else {
+                btn.classList.remove("liked");
+            }
+        })
+        .catch(err => {
+            console.log("Like failed", err);
+        });
     });
-});
-</script>
+    </script>
 
 </body>
 </html>
