@@ -43,6 +43,7 @@ class PostListView(ListView):
 
         # LIKED STATE
         if self.request.user.is_authenticated:
+            from django.db.models import Case, When
             qs = qs.annotate(
                 is_liked=Case(
                     When(
@@ -210,7 +211,8 @@ def toggle_like(request, post_id):
 
     return JsonResponse({
         "liked": liked,
-        "like_count": like_count
+        "like_count": like_count,
+        "post_id" : post_id
     })
 
 def like_history(request, post_id):

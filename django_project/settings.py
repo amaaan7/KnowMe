@@ -189,3 +189,17 @@ AWS_QUERYSTRING_AUTH = False
 DEFAULT_FILE_STORAGE = "users.storage.PublicMediaStorage"
 
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://know-me-xi.vercel.app",
+    "https://*.vercel.app",
+]
+
+
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    ".vercel.app",
+    "know-me-xi.vercel.app",
+]
