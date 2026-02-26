@@ -196,6 +196,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
 
+CSRF_COOKIE_SECURE = False   # for localhost
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -203,3 +206,4 @@ ALLOWED_HOSTS = [
     ".vercel.app",
     "know-me-xi.vercel.app",
 ]
+

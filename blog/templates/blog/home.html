@@ -84,40 +84,91 @@
         {% endif %}
 
     {% endif %}
+    
+    <script>
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.startsWith(name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+    </script>
 
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        const csrftoken = document
-          .querySelector('meta[name="csrf-token"]')
-          .getAttribute('content');
+      
+        const csrftoken = getCookie('csrftoken');
       
         document.querySelectorAll(".like-btn").forEach(btn => {
+      
           btn.addEventListener("click", function (e) {
             e.preventDefault();
       
-            if (this.disabled) return;   // 🚫 block spam clicks
+            if (this.disabled) return;
             this.disabled = true;
       
             const postId = this.dataset.postId;
+            const likeBtn = this;
       
-            fetch(`/post/${postId}/like/`, {
+            fetch(`/api/posts/${postId}/like/`, {
               method: "POST",
+              credentials: "same-origin",   // ⭐ VERY IMPORTANT
               headers: {
-                "X-CSRFToken": csrftoken
+                "X-CSRFToken": csrftoken,
+                "Content-Type": "application/json"
               }
             })
-            .then(res => res.json())
-            .then(data => {
-              document.getElementById(`like-count-${postId}`)
-                .innerText = `${data.like_count} likes`;
       
-              this.classList.toggle("liked", data.liked);
-              this.disabled = false;  // ✅ re-enable after response
+            .then(res => {
+      
+              // ⭐ USER NOT LOGGED IN
+              if (res.status === 401) {
+                return res.json().then(data => {
+                  window.location.href = data.redirect;
+                });
+              }
+      
+              // OTHER ERROR
+              if (!res.ok) {
+                throw new Error("Request failed");
+              }
+      
+              return res.json();
             })
-            .catch(() => {
-              this.disabled = false;  // safety fallback
+      
+            .then(data => {
+              if (!data) return;
+      
+              // update like count
+              const countEl = document.querySelector(
+                `.like-count[href*="${postId}"]`
+              );
+      
+              if (countEl) {
+                countEl.innerText = data.like_count;
+              }
+      
+              // update heart state
+              likeBtn.classList.toggle("liked", data.liked);
+      
+              likeBtn.disabled = false;
+            })
+      
+            .catch(err => {
+              console.error(err);
+              likeBtn.disabled = false;
             });
+      
           });
+      
         });
       });
       </script>

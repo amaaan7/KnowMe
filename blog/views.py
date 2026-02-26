@@ -189,10 +189,17 @@ class EventCreateView(LoginRequiredMixin, CreateView):
 def info(request):
     return render(request, 'blog/info.html', {'title': 'Information'})
 
-@login_required
+
+from django.urls import reverse
+from django.views.decorators.http import require_POST
+
+@require_POST
 def toggle_like(request, post_id):
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request"}, status=400)
+
+    # not logged in → send login redirect URL
+    if not request.user.is_authenticated:
+        login_url = f"{reverse('login')}?next={request.META.get('HTTP_REFERER','/')}"
+        return JsonResponse({"redirect": login_url}, status=401)
 
     post = get_object_or_404(Post, id=post_id)
 
@@ -201,18 +208,18 @@ def toggle_like(request, post_id):
         post=post
     )
 
-    if not created:
+    if created:
+        liked = True
+    else:
         like.delete()
         liked = False
-    else:
-        liked = True
 
     like_count = Like.objects.filter(post=post).count()
 
     return JsonResponse({
         "liked": liked,
         "like_count": like_count,
-        "post_id" : post_id
+        "post_id": post_id
     })
 
 def like_history(request, post_id):
