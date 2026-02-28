@@ -31,36 +31,24 @@ class PostListView(ListView):
     def get_queryset(self):
         qs = Post.objects.all().order_by('-date_posted')
 
-        # LIKE COUNT
+        # counts
         qs = qs.annotate(
-            like_count=Count("like", distinct=True)
+            like_count=Count("like", distinct=True),
+            comment_count=Count("comments", distinct=True),
         )
 
-        # COMMENT COUNT  ← THIS IS WHAT YOU WERE MISSING
-        qs = qs.annotate(
-            comment_count=Count("comments", distinct=True)
-        )
+        user = self.request.user
 
-        # LIKED STATE
-        if self.request.user.is_authenticated:
-            from django.db.models import Case, When
+        # liked state
+        if user.is_authenticated:
             qs = qs.annotate(
-                is_liked=Case(
-                    When(
-                        Exists(
-                            Like.objects.filter(
-                                post=OuterRef('pk'),
-                                user=self.request.user
-                            )
-                        ),
-                        then=True
-                    ),
-                    default=False,
-                    output_field=BooleanField()
+                is_liked=Exists(
+                    Like.objects.filter(
+                        post=OuterRef("pk"),
+                        user=user
+                    )
                 )
             )
-
-
         else:
             qs = qs.annotate(
                 is_liked=Value(False, output_field=BooleanField())

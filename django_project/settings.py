@@ -14,7 +14,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env locally (Vercel ignores it automatically)
-load_dotenv(BASE_DIR / ".env")
+if os.path.exists(BASE_DIR / ".env"):
+    load_dotenv(BASE_DIR / ".env")
 
 # ------------------------------------------------------------------------------
 # SECURITY
@@ -25,18 +26,13 @@ SECRET_KEY = os.getenv(
     "django-insecure-change-this"
 )
 
-DEBUG = True
+load_dotenv(BASE_DIR / ".env")
 
-# DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-
-ALLOWED_HOSTS = ["*"] if os.getenv("VERCEL") else [
-    "localhost",
-    "127.0.0.1",
-    ".vercel.app",
-]
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 
-# ------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
 # APPLICATIONS
 # ------------------------------------------------------------------------------
 
@@ -101,10 +97,10 @@ if not DATABASE_URL:
     )
 
 DATABASES = {
-    "default": dj_database_url.parse(
-        DATABASE_URL,
+    'default': dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
         conn_max_age=600,
-        conn_health_checks=True,
+        ssl_require=True
     )
 }
 
@@ -133,7 +129,7 @@ USE_TZ = True
 # ------------------------------------------------------------------------------
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -170,26 +166,24 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # AWS S3 CONFIG (MEDIA)
 # =========================
 
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+if os.getenv("AWS_STORAGE_BUCKET_NAME"):
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
 
-AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
+    if AWS_S3_REGION_NAME:
+        AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+    else:
+        AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 
-# Build the correct regional domain
-if AWS_S3_REGION_NAME:
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_QUERYSTRING_AUTH = False
+
+    DEFAULT_FILE_STORAGE = "users.storage.PublicMediaStorage"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
 else:
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-
-AWS_DEFAULT_ACL = 'public-read'  # Make uploaded files publicly accessible
-AWS_QUERYSTRING_AUTH = False
-
-# Use custom storage class for uploaded media files (makes them public)
-DEFAULT_FILE_STORAGE = "users.storage.PublicMediaStorage"
-
-MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
-
+    MEDIA_URL = "/media/"
 
 CSRF_TRUSTED_ORIGINS = [
     "https://know-me-xi.vercel.app",
@@ -205,5 +199,6 @@ ALLOWED_HOSTS = [
     "localhost",
     ".vercel.app",
     "know-me-xi.vercel.app",
+    "*",
 ]
 
