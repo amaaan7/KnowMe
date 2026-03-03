@@ -200,6 +200,7 @@ ALLOWED_HOSTS = [
     "localhost",
     ".vercel.app",
     "know-me-xi.vercel.app",
+    "knowme-production-58be.up.railway.app",
     "*",
 ]
 
