@@ -188,6 +188,7 @@ else:
 CSRF_TRUSTED_ORIGINS = [
     "https://know-me-xi.vercel.app",
     "https://*.vercel.app",
+    "https://knowme-production-58be.up.railway.app",
 ]
 
 CSRF_COOKIE_SECURE = False   # for localhost
