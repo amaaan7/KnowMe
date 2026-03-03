@@ -26,7 +26,6 @@ SECRET_KEY = os.getenv(
     "django-insecure-change-this"
 )
 
-load_dotenv(BASE_DIR / ".env")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
@@ -171,6 +170,17 @@ if os.getenv("AWS_STORAGE_BUCKET_NAME"):
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
+
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_VERIFY = True
+
+    # This prevents the extra HEAD request that sometimes fails on Railway
+    AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+    }
+
+
 
     if AWS_S3_REGION_NAME:
         AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
