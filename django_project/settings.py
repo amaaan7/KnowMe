@@ -163,7 +163,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # =========================
 # AWS S3 CONFIG (MEDIA)
-# =========================
+# ========================
 
 if os.getenv("AWS_STORAGE_BUCKET_NAME"):
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
