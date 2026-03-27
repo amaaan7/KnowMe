@@ -40,8 +40,10 @@
           </button>
         
       
-          <a href="{% url 'like_history' post.id %}" class="like-count">
-              {{ post.like_set.count }}
+          <a href="{% url 'like_history' post.id %}" 
+            class="like-count" 
+            id="like-count-{{ post.id }}">
+            {{ post.like_set.count }}
           </a>
       
       
@@ -148,9 +150,8 @@
               if (!data) return;
       
               // update like count
-              const countEl = document.querySelector(
-                `.like-count[href*="${postId}"]`
-              );
+              const countEl = document.getElementById(`like-count-${postId}`);
+          
       
               if (countEl) {
                 countEl.innerText = data.like_count;
