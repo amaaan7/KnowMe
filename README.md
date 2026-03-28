@@ -2,7 +2,7 @@
 
 A full stack social blogging platform built with Django and Django REST Framework. Users can register, create posts, like, comment, view announcements, and browse upcoming events — all with a clean, responsive UI.
 
-**Live Demo:** [know-me-xi.vercel.app](https://know-me-xi.vercel.app) &nbsp;|&nbsp; **Backend:** [Railway](https://railway.app)
+**Live Demo:** [know-me-xi.vercel.app](https://know-me-xi.vercel.app) &nbsp;|&nbsp; **Backend:** [Railway](https://knowme-production-58be.up.railway.app/)
 
 ---
 
