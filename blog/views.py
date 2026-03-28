@@ -181,15 +181,9 @@ def info(request):
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+
 @require_POST
-from django.db.models import Count
-
-posts = Post.objects.annotate(
-    like_count=Count('like')
-)
 def toggle_like(request, post_id):
-
-    # not logged in → send login redirect URL
     if not request.user.is_authenticated:
         login_url = f"{reverse('login')}?next={request.META.get('HTTP_REFERER','/')}"
         return JsonResponse({"redirect": login_url}, status=401)
@@ -215,6 +209,7 @@ def toggle_like(request, post_id):
         "post_id": post_id
     })
 
+
 def like_history(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     likes = Like.objects.filter(post=post).select_related("user")
@@ -223,16 +218,7 @@ def like_history(request, post_id):
         "post": post,
         "likes": likes
     })
-posts = Post.objects.all().order_by('-date_posted')
 
-if request.user.is_authenticated:
-    for post in posts:
-        post.is_liked = Like.objects.filter(
-            user=request.user, post=post
-        ).exists()
-else:
-    for post in posts:
-        post.is_liked = False
 
 @login_required
 @require_POST

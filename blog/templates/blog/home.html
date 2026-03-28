@@ -30,64 +30,130 @@
       {% if post.content|wordcount > 35 %}
         <a href="{% url 'post-detail' post.id %}" class="read-more">Read more →</a>
       {% endif %}
-            <!-- 🔴 LIKE SECTION START -->
-        <div class="interaction-bar">
 
-          <!-- LIKE -->
+      <div class="interaction-bar">
 
-          <button class="like-btn {% if post.is_liked %}liked{% endif %}" data-post-id="{{ post.id }}">
-            <i class="fa-regular fa-heart heart"></i>
-          </button>
-        
-      
-          <a href="{% url 'like_history' post.id %}" 
-            class="like-count" 
-            id="like-count-{{ post.id }}">
-            {{ post.like_set.count }}
-          </a>
-      
-      
-          <!-- COMMENT -->
-          <a href="{% url 'post-detail' post.id %}#comments" class="comment-icon">
-              💬
-          </a>
-      
-          <a href="{% url 'post-detail' post.id %}#comments" class="comment-count">
-              {{ post.comment_count }}
-          </a>
-      
-        </div>
-      
-            
-            <!-- 🔴 LIKE SECTION END -->
+        <!-- LIKE BUTTON -->
+        <button class="like-btn {% if post.is_liked %}liked{% endif %}" data-post-id="{{ post.id }}">
+          <i class="fa-regular fa-heart heart"></i>
+        </button>
 
-          </div>
-        </article>
-    {% endfor %}
+        <!-- ✅ CHANGE 1: added id="like-count-{{ post.id }}" so JS can find it -->
+        <!-- ✅ CHANGE 2: using {{ post.like_count }} instead of {{ post.like_set.count }} -->
+        <a href="{% url 'like_history' post.id %}"
+           class="like-count"
+           id="like-count-{{ post.id }}">
+          {{ post.like_count }}
+        </a>
 
-    {% if is_paginated %}
+        <!-- COMMENT -->
+        <a href="{% url 'post-detail' post.id %}#comments" class="comment-icon">
+          💬
+        </a>
 
-        {% if page_obj.has_previous %}
-          <a class="btn btn-outline-info mb-4" href="?page=1">First</a>
-          <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
-        {% endif %}
-          
-        {% for num in page_obj.paginator.page_range %}
-          {% if page_obj.number == num %}
-            <a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a>
-          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a>
-          {% endif %}
-        {% endfor %}
+        <a href="{% url 'post-detail' post.id %}#comments" class="comment-count">
+          {{ post.comment_count }}
+        </a>
 
-        {% if page_obj.has_next %}
-          <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
-          <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-        {% endif %}
+      </div>
 
+    </div>
+  </article>
+{% endfor %}
+
+{% if is_paginated %}
+  {% if page_obj.has_previous %}
+    <a class="btn btn-outline-info mb-4" href="?page=1">First</a>
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %}
+
+  {% for num in page_obj.paginator.page_range %}
+    {% if page_obj.number == num %}
+      <a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a>
+    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+      <a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a>
     {% endif %}
-    
+  {% endfor %}
+
+  {% if page_obj.has_next %}
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
+    <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+  {% endif %}
+{% endif %}
+
+
+<!-- ✅ CHANGE 3: getCookie function (needed by the like script below) -->
+<script>
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+<!-- ✅ CHANGE 4: Like button script with FIXED selector using getElementById -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    const csrftoken = getCookie('csrftoken');
+
+    document.querySelectorAll(".like-btn").forEach(btn => {
+
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+
+        if (this.disabled) return;
+        this.disabled = true;
+
+        const postId = this.dataset.postId;
+        const likeBtn = this;
+
+        fetch(`/api/posts/${postId}/like/`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json"
+          }
+        })
+        .then(res => {
+          if (res.status === 401) {
+            return res.json().then(data => {
+              window.location.href = data.redirect;
+            });
+          }
+          if (!res.ok) throw new Error("Request failed");
+          return res.json();
+        })
+        .then(data => {
+          if (!data) return;
+
+          // ✅ FIXED: was querySelector('.like-count[href*="..."]') — broken
+          // ✅ NOW:   getElementById finds the exact element every time
+          const countEl = document.getElementById(`like-count-${postId}`);
+          if (countEl) countEl.innerText = data.like_count;
+
+          likeBtn.classList.toggle("liked", data.liked);
+          likeBtn.disabled = false;
+        })
+        .catch(err => {
+          console.error(err);
+          likeBtn.disabled = false;
+        });
+
+      });
+
+    });
+  });
+</script>
+
 {% endblock content %}
-
-
-  
