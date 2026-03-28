@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env locally (Vercel ignores it automatically)
 if os.path.exists(BASE_DIR / ".env"):
     load_dotenv(BASE_DIR / ".env")
 
@@ -21,17 +20,11 @@ if os.path.exists(BASE_DIR / ".env"):
 # SECURITY
 # ------------------------------------------------------------------------------
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-change-this"
-)
-
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-this")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-
-
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # APPLICATIONS
 # ------------------------------------------------------------------------------
 
@@ -84,7 +77,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'django_project.wsgi.application'
 
 # ------------------------------------------------------------------------------
-# DATABASE  (FIXED)
+# DATABASE
 # ------------------------------------------------------------------------------
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -124,16 +117,45 @@ USE_I18N = True
 USE_TZ = True
 
 # ------------------------------------------------------------------------------
-# STATIC & MEDIA
+# STATIC FILES
 # ------------------------------------------------------------------------------
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
+# ------------------------------------------------------------------------------
+# MEDIA FILES — S3 on Railway, local filesystem in dev
+# ------------------------------------------------------------------------------
 
+if os.getenv("AWS_STORAGE_BUCKET_NAME"):
+    # ✅ PRODUCTION (Railway) — store uploads on AWS S3
+    AWS_ACCESS_KEY_ID     = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME    = os.getenv("AWS_S3_REGION_NAME", "ap-south-1")
+
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_FILE_OVERWRITE    = False
+    AWS_S3_VERIFY            = True
+    AWS_DEFAULT_ACL          = 'public-read'
+    AWS_QUERYSTRING_AUTH     = False
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+
+    AWS_S3_CUSTOM_DOMAIN = (
+        f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+    )
+
+    DEFAULT_FILE_STORAGE = 'users.storage.PublicMediaStorage'
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+
+else:
+    # ✅ LOCAL DEV — store uploads in /media/ folder
+    MEDIA_URL  = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ------------------------------------------------------------------------------
 # DEFAULTS
@@ -146,54 +168,22 @@ LOGIN_URL = 'login'
 
 # ------------------------------------------------------------------------------
 # EMAIL
-# ---------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = os.getenv("EMAIL_USER")
+EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST         = 'smtp.gmail.com'
+EMAIL_PORT         = 587
+EMAIL_USE_TLS      = True
+EMAIL_HOST_USER    = os.getenv("EMAIL_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASS")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_TEMPLATE_PACK          = "bootstrap5"
 
-
-# =========================
-# AWS S3 CONFIG (MEDIA)
-# ========================
-
-if os.getenv("AWS_STORAGE_BUCKET_NAME"):
-    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
-
-    AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_S3_VERIFY = True
-
-    # This prevents the extra HEAD request that sometimes fails on Railway
-    AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-    }
-
-
-
-    if AWS_S3_REGION_NAME:
-        AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
-    else:
-        AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_QUERYSTRING_AUTH = False
-
-    DEFAULT_FILE_STORAGE = "users.storage.PublicMediaStorage"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
-else:
-    MEDIA_URL = "/media/"
+# ------------------------------------------------------------------------------
+# SECURITY / HOSTS
+# ------------------------------------------------------------------------------
 
 CSRF_TRUSTED_ORIGINS = [
     "https://know-me-xi.vercel.app",
@@ -201,9 +191,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://knowme-production-58be.up.railway.app",
 ]
 
-CSRF_COOKIE_SECURE = False   # for localhost
+CSRF_COOKIE_SECURE   = False
 SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_HTTPONLY  = False
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -213,4 +203,3 @@ ALLOWED_HOSTS = [
     "knowme-production-58be.up.railway.app",
     "*",
 ]
-

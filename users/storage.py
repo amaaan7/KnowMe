@@ -6,4 +6,4 @@ class PublicMediaStorage(S3Boto3Storage):
     """
     default_acl = 'public-read'
     file_overwrite = False
-
+    location = 'media'  # stores files under /media/ prefix in the bucket
